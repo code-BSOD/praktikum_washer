@@ -43,7 +43,8 @@ class Timer:
 # Random MQTT Client ID
 client_id = f"python_mqtt-{random.randint(0, 100)}"
 client_id_sub = f"python_mqtt-{random.randint(0, 1000)}"
-server_ip_address = "192.168.0.105"
+# server_ip_address = "192.168.0.105" # local mosquitto broker
+server_ip_address = "131.159.6.111" # lab mqtt broker
 
 # Creating the MQTT Client
 client = mqtt_client.Client(client_id=client_id) # client for publishing commands
