@@ -13,6 +13,9 @@ class TimerError(Exception):
     """A custom exception used to report errors in use of Timer class"""
 
 class Timer:
+    """
+    Timer class created for extracting time duration between on and off state of the power socket
+    """
     def __init__(self):
         self._start_time = None
 
@@ -24,7 +27,7 @@ class Timer:
         self._start_time = time.perf_counter()
 
     def stop(self):
-        """Stop the timer, and report the elapsed time"""
+        """Stop the timer, and report the elapsed time in seconds"""
         if self._start_time is None:
             raise TimerError(f"Timer is not running. Use .start() to start it")
 
@@ -63,6 +66,21 @@ sensor_energy_reading = [] # for energy reading from telemetry
 
 # Adding subscriber callback function
 def onMessage(client, userdata, msg):
+    """Defines what action needs to be done when a message is received from the subscribed topic.
+    Used as a callback function. When a message is received from the subscribed topic, it loads as a JSON object.
+    Then, the object is appended to either one of the list named power_toggle_status or sensor_energy_reading based on
+    if it's coming from stat or tele subscribed channel. 
+    * States like Power On/Off is appended to power_toggle_status list
+    * Telemetry data is saved to sensor_energy_reading list.
+    
+    If the any of the list size becomes greater than 50, only the last 50 subscribed message that are received are kept.
+
+
+    Args:
+        client (_type_): none
+        userdata (_type_): non
+        msg (_type_): message received from the mqtt broker for subscribed topics.
+    """
     # print(msg.topic + ": " + msg.payload.decode() + " from here")
     data = json.loads(msg.payload.decode())
     
@@ -128,7 +146,8 @@ t = Timer()
 @get("/")
 def base_endpoint():
     """
-    Method: GET
+    HTTP Method: GET
+    Endpoint: /
 
     Base endpoint to test if the API is running or not.
 
@@ -141,16 +160,24 @@ def base_endpoint():
 
 @put("/power/<state>")
 def power_toggle(state):
-    """_summary_
+    """
+    HTTP Method: PUT
+    Endpoint: /power/<state>
+    Dynamic Endpoint.
 
+    This endpoint is used to turn on or off the power socket.
+    * If user calls the endpoint '/power/on', then the function will publish a message to the MQTT broker causing the switch to turn on.
+    * If user calls the endpoint '/power/off', then the function will publish a message to the MQTT broker causing the switch to turn off.
+    * If any other value is passed from the URL endpoint, it will return a JSON object notifying the URL endpoint was wrong.
+    
     Args:
         state (String): Takes a String parameter 'on' or 'off'. This is automatically passed from the dynamic URL.
 
     Returns:
-        _type_: _description_
+        _type_: JSON object
     """
 
-    power_status = state.lower()
+    power_status = state.lower() # for avoiding capitalization error from the URL
     global total_run_time # using the global variable
 
     if client.connect(server_ip_address, port=1883, keepalive=60) != 0:
@@ -164,20 +191,28 @@ def power_toggle(state):
         client.disconnect()
         t.start() # start the timer as the device is on
 
-        return {'Power On': True}
+        return {'Power On': True} # now the socket is turned on
     if power_status == 'off':
         client.publish(topic, payload='off', qos=0)
         client.disconnect()
         total_run_time = t.stop() # stopping the timer as the device is off and returning the time in seconds
 
-        return {'Power Off': True}
+        return {'Power Off': True} # now the socket is turned off
     else:
         return {"wrong url parameter provided": power_status}
 
 
 @get('/power/status')
 def get_socket_power_status():
-        
+    """
+    HTTP Method: GET
+    Endpoint: /power/status
+
+    * This method returns the current status of the power socket to know if it's on or off
+
+    Returns:
+        _type_: JSON object with Socket Power Status: ON or OFF
+    """
     if client.connect(server_ip_address, 1883, 60) != 0:
         print("Could NOT connect to broker")
         return {'success': False}
@@ -187,10 +222,12 @@ def get_socket_power_status():
     client.publish(topic, '', 0) # Publishes request to get socket power status
     client.disconnect() # disconnects the broker client from the server
 
-    #wait for the message to be appended
+    # wait for the message to be appended for safety
     time.sleep(2)
+
     # Extracting current power status from the MQTT return msg
     curret_power_status = power_toggle_status[-1]["POWER"]
+
     # Clearing up the power toggle status list after getting current status
     power_toggle_status.clear()
     return {'current_power_status': curret_power_status}
@@ -198,6 +235,40 @@ def get_socket_power_status():
 
 @get('/power/consumption')
 def power_consumption():
+    """HTTP Method: GET
+    Endpoint: /power/consumption
+
+    Returns the power usage of the motor or appliances from the time it was started (socket switched on) and when it was switched off (socket switched off)
+
+    * MQTT socket returns power telemetry data at 10s interval (can NOT go lower than 10s).
+    * Thus, only an approximation of power usage can be reported.
+
+    The function waits for 3s in the beginning to get any new upcoming telemetry data from the power socket.
+
+    After that, in the variable named 'data', a sliced list with the last 10 entries of the telemetry data from sensor_energy_reading list is created.
+    
+    Then the list is iterated in reverse to traverse from the last energy data that was received.
+
+    When a device is using power, the MQTT telemetry will return Voltage and Current value greater than 0.
+
+    One assumption was considered that is, the motor's voltage and current usage is consistent all the time.
+
+    * How energy was calculated
+    1. We reverse iterate over the sensor telemetry data and try to find the entry that has both voltage and current value greater than 0, meaning the motor is running.
+
+    2. After that, we extract the voltage and current data from the reading and calculated watt = voltage * amp
+
+    3. The duration the motor remained powered on was calculated when the socket was powered off (/power/off endpoint was called)
+
+    4. The duration was calculated in seconds. To return power usage in kWh, we convert the duration seconds into hours format in the duration variable.
+
+    5. The power in kWh is calculated by multiplying (watt * duration) and then dividing by 1000.
+
+    6. After energy consumption was calulated, the sensor_energy_reading list is cleared off to save memory.
+
+    Returns:
+        _type_: JSON object with Energy consumption of the motor in kWh and how many seconds the motor was powered on.
+    """
     time.sleep(3)
     data = sensor_energy_reading[-10:]
 
