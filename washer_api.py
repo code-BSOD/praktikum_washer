@@ -282,7 +282,8 @@ def power_consumption():
             sensor_energy_reading.clear()
 
             # return {"energy consumption in kWh": energy_consumption}
-            return {f"energy consumption for {round(total_run_time)}s in kWh": energy_consumption}
+            return {"time": f"{round(total_run_time)}", "energy": {energy_consumption}}
+            # return {f"energy consumption for {round(total_run_time)}s in kWh": energy_consumption}
 
 
 # API Endpoints end
