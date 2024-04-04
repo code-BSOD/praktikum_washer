@@ -15,7 +15,9 @@ There are two main parts for the tasks.
 
 ## ii. Detailed Architectrue of the two main parts
 
-### 1. Socket Server REST API
+### 1. Socket Server REST API & MQTT Pub/Sub Architecture for Power Socket and Socket Server
+
+> **TL;DR**: Using the Socket Server REST API endpoints, the Process Engine can later on turn the Delock Power Socket on or off. Socket Server can also return the power usage data in kWh for each time the water pump motor was used from the sensor telemetry data of the power socket to the Process Engine.
 
 This is a REST API server used to control the [Delock WLAN Power Socket Switch MQTT with energy monitoring](http://https://www.delock.com/produkt/11827/merkmale.html "Delock WLAN Power Socket Switch MQTT with energy monitoring"). The WLAN socket supports [MQTT Protocol](https://mqtt.org/ "MQTT Protocol"). The API was implemented using [Bottle: Python Web Framework](https://bottlepy.org/docs/dev/ "Bottle: Python Web Framework"). It serves as an itermediary medium for the power socket, MQTT Broker Server and the Process Engine.
 
@@ -30,8 +32,8 @@ This is a REST API server used to control the [Delock WLAN Power Socket Switch M
 
 Using various endpoints of this API and through MQTT protocol, the socket:
 1. Can be turned **ON** or **OFF**
-2. Can provide current *power status* of the switch (on or off)
-3. Can provide **telemetry data** from socket sensors (voltage, watts, total power usage etc).
+2. Can provide current **Power Status** of the switch (on or off)
+3. Can provide **Telemetry Data** from socket sensors (voltage, watts, total power usage etc).
 
 #### a. Installation & Running the API Server
 
@@ -45,7 +47,7 @@ Using various endpoints of this API and through MQTT protocol, the socket:
 - The source code is saved in `/src` directory.
 - Run the API server using:
 `python3 src/washer_api.py`
-- The server will be listening to incoming request from* IPV4 *and *IPV6* as well on the custom port *3799*.
+- The server will be listening to incoming request from *IPV4* and *IPV6* as well on the custom port *3799*.
 
 #### b. API Endpoints Overview
 
@@ -60,7 +62,7 @@ Using various endpoints of this API and through MQTT protocol, the socket:
 
 #### c. API Endpoints Short Explanations
 
-For the Process Engine, endpoints 2 and 4 were invoked. Rest are for testing purposes.
+For the **Process Engine**, *endpoints 2 and 4 *were invoked. Rest are for testing purposes.
 
 **1. "/"**
 - Base Endpoint.
@@ -72,12 +74,12 @@ For the Process Engine, endpoints 2 and 4 were invoked. Rest are for testing pur
 - Uses dynamic routing. {state} part needs to be replaced with "on" or "off".
 - MQTT Broker server for topic publishing and subscribing is provided by the lab and it listens to standard MQTT Port 1883.
 - If user calls the endpoint **'/power/on'**, then the function will publish a message to the MQTT broker causing the switch to *turn on*.
-	- The server publishes to the topic `'cmnd/washer/Power'` to the MQTT Broker Server (using lab's MQTT Broker Server) with the correct payload.
-	- The Socket is subscribed to the same topic and once it receives the published message, it turns itself on.
+	- The Socket Server publishes to the topic `'cmnd/washer/Power'` to the MQTT Broker Server (using lab's MQTT Broker Server) with the correct payload.
+	- The Power socket is subscribed to the same topic and once it receives the published message, it turns itself on.
 	- QOS (Quality of Service) is by default 0.
 - If user calls the endpoint **'/power/off'**, then the function will publish a message to the MQTT broker causing the switch to *turn off*.
-	- The server publishes to the topic `'cmnd/washer/Power'` to the MQTT Broker Server with the correct payload.
-	- The socket is subscibed to the same topic and once it receives the published message, it turns itself off.
+	- The Socket Server publishes to the topic `'cmnd/washer/Power'` to the MQTT Broker Server with the correct payload.
+	- The Power socket is subscibed to the same topic and once it receives the published message, it turns itself off.
 	- QOS (Quality of Service) is by default 0.
 - If any other value is passed from the URL endpoint, it will return a JSON object notifying the URL endpoint was wrong.
 - Refer to code documentations for implementation logics.
@@ -91,7 +93,7 @@ For the Process Engine, endpoints 2 and 4 were invoked. Rest are for testing pur
 - Returns the power usage of the motor or appliances from the time it was started (socket switched on) and when it was switched off (socket switched off)
 - MQTT socket returns power telemetry data at 10s interval (can NOT go lower than 10s).
 - Thus, only an approximation of power usage can be reported.
-- Returns energy usage in kWH.
+- Returns energy usage in kWh.
 - How energy consumption was calculated:
 	- The voltage and current data from the reading and calculated as *watt = voltage * amp*
 	- The duration the motor remained powered on was calculated when the socket was powered off (/power/off endpoint was called)
@@ -112,10 +114,10 @@ The Delock Power Socket also serves as a client and subscribes to and publishes 
 
 
 ![Architecture of MQTT Architecture](img/MQTT%20Architecture.drawio.png)
+
 *Picture: MQTT Pub/Sub Architecture used in this project*
 
 **Example Scenario:**
 When the Socket Server client publishes a Message to the topic `cmnd/washer/Power` with appropriate payload while the Delock power socket had already been subscribed to the same topic and upon receiving the message, it turns the power on or off or publishes the current status of the power socket whether it's on or off to the topic `stat/washer/RESULT`.
 
 The Socket Server client also subcribes to topic for example `stat/washer/RESULT` and receives message when the power socket publishes any message.
-
