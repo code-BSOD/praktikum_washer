@@ -11,6 +11,8 @@ There are two main parts for the tasks.
 
 ![Simple Architecture of the Glass Washing Mechanism](img/overall_architecture_1.png)
 
+*Picture: Simple Architecture of the Overall workflow of the tasks*
+
 ## ii. Detailed Architectrue of the two main parts
 
 ### 1. Socket Server REST API
@@ -18,9 +20,11 @@ There are two main parts for the tasks.
 This is a REST API server used to control the [Delock WLAN Power Socket Switch MQTT with energy monitoring](http://https://www.delock.com/produkt/11827/merkmale.html "Delock WLAN Power Socket Switch MQTT with energy monitoring"). The WLAN socket supports [MQTT Protocol](https://mqtt.org/ "MQTT Protocol"). The API was implemented using [Bottle: Python Web Framework](https://bottlepy.org/docs/dev/ "Bottle: Python Web Framework"). It serves as an itermediary medium for the power socket, MQTT Broker Server and the Process Engine.
 
 ![Picture of Delock WLAN Power Socket](img/631eff53a09771.36696341.jpg)
+
 *Picture: Delock WLAN Power Socket with MQTT Support*
 
-![Picture of Delock Power Sockets Web UI](img/5ef5a15fa2fd46.98572189.jpg) 
+![Picture of Delock Power Sockets Web UI](img/5ef5a15fa2fd46.98572189.jpg)
+
 *Picture: Delock Power Socket Web UI*
 
 
