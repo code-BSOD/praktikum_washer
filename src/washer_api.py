@@ -292,4 +292,4 @@ def power_consumption():
 
 # Running the API
 if __name__ == '__main__':
-    run(host='::', port=3799, reloader=True, debug=True)
+    run(host='::', port=3799)
