@@ -20,6 +20,68 @@ There are two main parts for the tasks.
 
 ***
 
+## Repository Structure
+
+
+    .
+    ├── cpee
+    │   └── washer_register_v2.xml
+    ├── img
+    │   ├── 5ef5a15fa2fd46.98572189.jpg
+    │   ├── 631eff53a09771.36696341.jpg
+    │   ├── cocktail_mixer.JPG
+    │   ├── cpee_endpoints.png
+    │   ├── data_element.png
+    │   ├── finished.png
+    │   ├── glass_cycle_loop.png
+    │   ├── hovering.png
+    │   ├── IMG_1774.JPG
+    │   ├── MQTT Architecture.drawio.png
+    │   ├── overall_architecture_1.png
+    │   ├── process_block_1.png
+    │   ├── process_block_2.png
+    │   ├── process_block_3.png
+    │   ├── process_block_4.png
+    │   ├── washer_sprayer.JPG
+    │   └── whole_process.png
+    ├── README.md
+    ├── requirements.txt
+    ├── robot_files
+    │   ├── scripts
+    │   │   ├── 10_return_home.script
+    │   │   ├── 1_home_to_hover.script
+    │   │   ├── 2_hover_to_gls_pick.script
+    │   │   ├── 3_pickup_glass_to_hover.script
+    │   │   ├── 4_wash_hover.script
+    │   │   ├── 6_wash_loop.script
+    │   │   ├── 7_wash_complete_to_hover.script
+    │   │   └── 8_put_glass_down.script
+    │   ├── txts
+    │   │   ├── 10_return_home.txt
+    │   │   ├── 1_home_to_hover.txt
+    │   │   ├── 2_hover_to_gls_pick.txt
+    │   │   ├── 3_pickup_glass_to_hover.txt
+    │   │   ├── 4_wash_hover.txt
+    │   │   ├── 6_wash_loop.txt
+    │   │   ├── 7_wash_complete_to_hover.txt
+    │   │   └── 8_put_glass_down.txt
+    │   └── urp
+    │       ├── 10_return_home.urp
+    │       ├── 1_home_to_hover.urp
+    │       ├── 2_hover_to_gls_pick.urp
+    │       ├── 3_pickup_glass_to_hover.urp
+    │       ├── 4_wash_hover.urp
+    │       ├── 6_wash_loop.urp
+    │       ├── 7_wash_complete_to_hover.urp
+    │       └── 8_put_glass_down.urp
+    ├── src
+    │   └── washer_api.py
+    └── video
+        └── demo.mp4
+    
+
+***
+
 ## ii. Detailed Architectrue of the two main parts
 
 ### 1. Socket Server REST API & MQTT Pub/Sub Architecture for Power Socket and Socket Server
@@ -286,12 +348,9 @@ After successfully executing all the service calls, the Process Engine will stop
 
 ***
 ## iii. Video Demo
-A video demo of the whole process can be viwed here below. 
+
 File is also available under the directory 'video'.
 
-![Video Demo](video/demo.mp4)
-
-*Video: Demo of the Glass Washer Process*
 
 ***
 
