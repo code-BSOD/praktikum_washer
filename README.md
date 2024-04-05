@@ -355,7 +355,7 @@ File is also available under the directory 'video'.
 ***
 
 ## Acknowledgement
-* **This practical project was completed by:**
+**This practical project was completed by:**
 
 Mishkat Nur Rahman
 
@@ -365,7 +365,9 @@ Data Engineering and Analytics
 
 Technical University of Munich
 
-* **Supervised by:**
+<br/>
+
+**Supervised by:**
 
 Dr. Jürgen Mangler
 
@@ -375,6 +377,8 @@ TUM School of Computation, Information and Technology
 
 Technical University of Munich
 
-* *Special Thanks to:*
+<br/>
+
+*Special Thanks to:*
 
 Lisa, Dominik & Johannes for all the technical help and feedback throughout the project :)
