@@ -352,6 +352,7 @@ After successfully executing all the service calls, the Process Engine will stop
 File is also available under the directory 'video'.
 
 **Youtube Link for Demo Video**
+
 Click on the image to redirect to Youtube.
 
 [![Glass Washing Demo Video](img/video_thumb.png)](https://www.youtube.com/watch?v=6jo1BjBZV5w)
