@@ -1,0 +1,22 @@
+ Program
+   Robot Program
+     'var_2≔3'
+     'glass_hover=p[-.603,-0.23+var_2*0.150 ,0.277,2.067,2.652,-2.043]'
+     glass_hover=p[-.603,-0.23+in1*0.150 ,0.277,2.067,2.652,-2.043]
+     MoveJ
+       Waypoint_3
+       'Waypoint_4'
+       'Waypoint_2'
+     'MoveJ'
+     MoveJ
+       glass_hover
+     MoveL
+       Direction: Base Z-
+         Until (distance)
+     Gripper Move15% (1)
+     MoveL
+       Direction: Base Z+
+         Until (distance)
+     Gripper Open (1)
+     MoveJ
+       Waypoint_1

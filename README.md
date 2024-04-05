@@ -47,7 +47,7 @@ Using various endpoints of this API and through MQTT protocol, the socket:
 - The source code is saved in `/src` directory.
 - Run the API server using:
 `python3 src/washer_api.py`
-- The server will be listening to incoming request from *IPV4* and *IPV6* as well on the custom port *3799*.
+- The server will be listening to incoming request from *IPv4* and *IPv6* as well on the custom port *3799*.
 
 #### b. API Endpoints Overview
 
@@ -67,7 +67,6 @@ For the **Process Engine**, *endpoints 2 and 4 *were invoked. Rest are for testi
 **1. "/"**
 - Base Endpoint.
 - To test if the API is running or not
-- **Output**: *Python Dict -> Returns JSON* automatically upon invoke by Bottle. Retrurns bool value True if API is running correctly.
 - Refer to code documentations for implementation logics.
 
 **2. "/power/{state}"**
@@ -107,8 +106,12 @@ For the **Process Engine**, *endpoints 2 and 4 *were invoked. Rest are for testi
 The WLAN power socket that is being used supports MQTT protocol. This protocol uses the Publish/Subscribe architecture.
 
 We have a server that runs the MQTT Broker Server (provided by praktikum lab) which was used to publish and subscribe to messages. The Socket Server serves as both:
-- A **publisher** client (publishes to command topic to turn the socket on or off or get status) 
+- A **publisher** client (publishes to command topic to turn the socket on or off or get status).
+	- Publishes to the topic: `cmnd/washer/Power`
 - A **subscriber** client (subscribes to telemtry topic or status topic of the switch to get sensor telemetry data or power status data)
+	- Subscribes to the topics:
+		 - 1.`stat/washer/RESULT`
+		 - 2.`tele/washer/SENSOR`
 
 The Delock Power Socket also serves as a client and subscribes to and publishes to topics. Below an architecture of how publishing and subscribing to topics is done for the power socket case is given below.
 

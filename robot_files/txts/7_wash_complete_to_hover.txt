@@ -1,0 +1,13 @@
+ Program
+   Robot Program
+     MoveJ
+       Waypoint_2
+       Waypoint_1
+     MoveL
+       Direction: Base Z+
+         Until (distance)
+     MoveL
+       Direction: Base X+
+         Until (distance)
+     MoveJ
+       Waypoint_3

@@ -1,0 +1,10 @@
+ Program
+   Robot Program
+     'MoveL'
+     'Gripper Move33% (1)'
+     MoveL
+       Waypoint_2
+       Direction: Base Z+
+         Until (distance)
+       MoveJ
+         Waypoint_1

@@ -1,0 +1,10 @@
+ Program
+   Robot Program
+     MoveJ
+       home
+       MoveJ
+         Waypoint_1
+       Gripper Open (1)
+     MoveJ
+       hover1
+     'MoveJ'
