@@ -1,17 +1,24 @@
 # Praktikum - Cocktail Mixer Glass Washing
+***
 
-## i. Overview
-This repository contains the codes and architecture and detailed description for the Praktikum of Human Software Mediator Pattern.
+## i. Overview of Praktikum
+This repository contains the codes and architectures and detailed description for the Praktikum of Human Software Mediator Pattern.
 
-*This repository is for the Cocktail Mixer's Glass Washing part*.
+> This repository is ONLY for the Cocktail Mixer's Glass Washing part.
 
 There are two main parts for the tasks.
-1. A REST API server (Socket Server referred to from onwards) to turn an MQTT Enable Power Socket On/Off to switch on the DC Water Pump and also return the Power Usage of a wash cycle
+1. A REST API server (Socket Server referred to from onwards) to turn an MQTT Enable Power Socket On/Off to switch on/off the DC Water Pump and also return the Power Usage of a wash cycle
 2. Using the Process Engine to Integrate the above REST API and also control the Robot Movement to wash multiple glasses in a row.
 
 ![Simple Architecture of the Glass Washing Mechanism](img/overall_architecture_1.png)
 
 *Picture: Simple Architecture of the Overall workflow of the tasks*
+
+![Cockail Mixer](img/cocktail_mixer.JPG)
+
+*Picture: Cocktail Mixer Station*
+
+***
 
 ## ii. Detailed Architectrue of the two main parts
 
@@ -38,6 +45,7 @@ Using various endpoints of this API and through MQTT protocol, the socket:
 #### a. Installation & Running the API Server
 
 - Clone the repository from Github
+- Navigate to the cloned Git repo folder
 - Create a Virtual Environment using:
 `python3 -m venv .venv`
 - Activate the Virtual Environment using:
@@ -56,13 +64,13 @@ Using various endpoints of this API and through MQTT protocol, the socket:
 | /                  | GET         | Static           | None          | To check if the API server is running                         | {"API Working": True}                          |
 | /power/{state}     | PUT         | Dynamic          | on            | To turn on the power socket                                   | {'Power On': True}                             |
 | /power/{state}     | PUT         | Dynamic          | off           | To turn off the power socket                                  | {'Power Off': True}                            |
-| /power/status      | GET         | Static           | None          | To check if the socket is turned on/off                       | {'current_power_status' : curret_power_status} |
+| /power/status      | GET         | Static           | None          | To check if the socket is turned on/off                       | {'current_power_status' : ON} |
 | /power/consumption | GET         | Static           | None          | Return the power consumption usage each time the motor was on | {"energy consumption for 14s in kWh": 0.00034} |
 
 
 #### c. API Endpoints Short Explanations
 
-For the **Process Engine**, *endpoints 2 and 4 *were invoked. Rest are for testing purposes.
+For the **Process Engine**, *endpoints 2 and 4* were invoked. Rest are for testing purposes.
 
 **1. "/"**
 - Base Endpoint.
@@ -124,3 +132,181 @@ The Delock Power Socket also serves as a client and subscribes to and publishes 
 When the Socket Server client publishes a Message to the topic `cmnd/washer/Power` with appropriate payload while the Delock power socket had already been subscribed to the same topic and upon receiving the message, it turns the power on or off or publishes the current status of the power socket whether it's on or off to the topic `stat/washer/RESULT`.
 
 The Socket Server client also subcribes to topic for example `stat/washer/RESULT` and receives message when the power socket publishes any message.
+
+***
+
+### 2. Using Process Engine to Control Robot and Delock Power Socket to Wash Glasses
+
+> TL;DR: The Process Engine is used to control the robot movement. It calls robot API endpoints to initiate robot movements, picks up the glasses, washes them and returns to the original positions, invokes Server Socket API endpoints to turn the power socket on and off which essentially turns on the water pump for the washing mechanism of the cocktail mixer and also retrieves the power usage data.
+
+The Process Engine is used to call different API endpoints to do the whole glass clean up process. There are many glasses that are laid down in a straight line around 100mm apart. The process engine starts a process and then invokes different robot API endpoints to pick up the first glass from its home position, takes it to the washing tool, turns on the power socket so that the water pump is on, washes the glass 2 times with 2 sec interval in between, then power offs the socket so that the water pump gets turned off, then it returns the first glass to it's original position from where the robot picked it up initially and returns the power usage for that wash cycle. Then it continues on in a loop to pickup and wash the rest of the glasses. After all the glasses are washed completely, the robot then returns back to its home position and the process gets finished.
+
+* The whole Process Engine workflow file is provided in the `cpee` directory. The XML file can be loaded in the Process Engine for execution.
+
+* The robot itself provides a RESTFul API to execute different commands or robot program.
+
+More details of the whole process is provided below.
+
+![Robot home position](img/IMG_1774.JPG)
+
+*Picture: Robot Home Position*
+
+![Washer Startion](img/washer_sprayer.JPG)
+
+*Picture: Glass Washing Station*
+
+#### a. Process Engine Data Elements
+
+In the process engine, we can put data elements that can be used for various operations.
+Here we have 2 data elements.
+1. glass_index => 0 : Used to set the position of each glasses. Starts at position 0 for first glass.
+2. no_of_glasses => 4 : Used to set how many glasses that needs to be washed.
+
+![Process Engine Datat Element](img/data_element.png)
+
+*Picture: Process Engine Data Element*
+
+#### b. Process Engine Endpoints
+Below picture provies an overview of all the endpoints that are being invoked by the Process Engine.
+
+![Process Engine Endpoints](img/cpee_endpoints.png)
+
+*Picture: Process Engine Endpoints*
+
+#### c. Overview of the Glass Washing Process Architecture
+The whole glasses washdown process architecture from the Process Engine is provided in the image. Explanation will be provided in blocks.
+
+![Whole Process Architecture](img/whole_process.png)
+
+*Picture: Glass Processing Architecture in the Process Engine*
+
+##### 1. Home to Hover
+
+First, the Process Engine starts with the `1. Home to Hover` process, which invokes the robot endpoint `home_to_hover`.
+This invokation brings the robot from its *home position* to its *hovering position*.
+
+![Home to Hover](img/process_block_1.png)
+
+*Picture: Process Home to Hover*
+
+##### 2. Glass Wash Cycle Loop
+In this section, the Process Engine runs through a loop to wash each of the glasses as specified in the data element. For example, from *hovering position*, the robot picks up the first glass, then washes it and then returns the glass to its position and then returns back to *hovering position* and then continues the washing process for second, third glasses and so on. After the loop ends, the robot returns to its *home position* from *hovering position*.
+
+![Robot Hovering Position](img/hovering.png)
+
+*Picture: Robot Hovering Position*
+
+###### 2.1 Loop and Set Integer Register Value and Increament the Index Value
+
+The Process Engine goes into a loop to pickup glasses one by one and wash them.
+
+- We're checking the condtion `data.glass_index < data.no_of_glasses` for the loop. This means, as long a the glass index is less than the no of glasses to wash, continue the loop and wash all the glasses one after another synchronously.
+
+![Process Block 2](img/process_block_2.png)
+
+*Picture: Glass Wash Loop until Turning on Socket/Pump*
+
+- Inside the loop, the first service call is *Set Integer Register Value*. 
+    - Here, the Process Engine is sending a value to the robot API's register endpoint, particularly to Integer Register 0 and setting up its value to the current value of `glass_index`. 
+    - When it starts, from the data element, `glass_index = 0`.
+    - Thus, the Integer Register 1 value is 0 in the robot. 
+    - This helps the robot to calculate the position of the first glass and the subsequent ones.
+- Then, the second element, which is a script *Next Glass Index Value Data Increase*.
+    - This script does the following: `glass_index += 1`.
+    - It increases the index value from the previous one, which is then send to the Integer Register 1 of the robot.
+    - Because of this change, the robot will pickup the next glass when the loop returns to top.
+
+###### 2.2 Hover to Glass Pickup
+When this service call is executed, based on the value of the `glass_index` and the data that was sent to the Integer Register 1 of the robot, the robot will pickup the corresponding glass using the gripper by closing it appropirately. If `glass_index = 0`, then Integer Register value will be sent as 0 and the robot will pickup the first glass. On the next loop repeat, `glass index` will be 1 and Integer Register value will be 1. Thus, the robot will pickup the second glass. And this will continue until the loop exits.
+
+###### 2.3 Pickup Glass to Hover
+Next service call, *Pickup Glass to Hover* will pick up the respective glass and move up to a hovering position.
+
+###### 2.4 Wash Hover
+In this service call, the robot will move from it's last position to glass washer sprayer tool and hover over it.
+
+###### 2.5 Wash Loop Cycle Index Set & Turn Socket/Motor On
+- Wash Loop Cycle Index Set:
+    - Here in this script, we are setting up a data element `data.no_of_washes` to set the value for how many times the glass will be washed.
+    - By default, the value is set to 2. 
+    - Thus, every glass will be washed 2 times.
+- Turn Socket/Motor On
+    - The Process Engine will invoke the Socket Server API endpoint `power/on`.
+    - This will turn on the socket and the DC water pump motor will then turn on.
+
+![Process Block 3](img/process_block_3.png)
+
+*Picture: Glass Wash Loop from Turn Socket/Motor On to Turn Socket/Motor Off*
+
+###### 2.6 Loop for How many times a single glass will be washed
+In this inside loop, we use the value from 2.5 Wash Loop Cycle Index Set to set the condition of how many times a single glass will be washed.
+Since the value was set to 2, each glass will be washed 2 times.
+- 6 Wash Loop
+    - This service call will call the robot API endopoint to press the glass down on the washer sprayer mechanism from its last position.
+    - Then the washer mechanism will spray water inside the glass till it remains pressed.
+    - It will press down for 5 seconds.
+    - Then the robot will move back to it's previous positon above the sprayer mechanism
+- Wait for 2 second
+    - The robot will then wait for 2 seconds as the CPEE called the timeout endpoint to wait 2 seconds before executing the next service call.
+    - If it's in the next loop, then it will repeat this process again.
+- Wash Loop Cycle Index Decrease
+    - Here, we're decreasing the value of `data.no_of_washes` data element so that once it becomes 0, the loop breaks.
+
+
+###### 2.7 Turn Socket/Motor Off
+The Process Engine will then call the `power/off` endpoint of the Socket Server and it will turn the socket off and thus the water motor pump will also turn off.
+
+![Process Block 4](img/process_block_4.png)
+
+*Picture: Glass Wash Loop till Power Usage and Last Service call 9. Return Home*
+
+###### 2.8 Wash Complete to Hover
+From 2.7 Turn Socket/Motor Off, the Process Engine will then execute the service call *7. Wash Complete to Hover*, which will call and endpoint in the robot API and take the robot from its last postion to another hovering position behind the washer sprayer.
+
+###### 2.9 Put Glass Down
+Here, the Process Engine will execute this service call which will call another endpoint in the robot API and the robot will put the glass down from the position where it pickup up. Return to the glass picking position, drop down, open up the gripper, moves up and then moves back to the hovering position of *1. Home to Hover*.
+
+###### 3.0 Power Usage
+In this service call, the Process Engine will call the Socket Server API endpoint `power/consumption` and it will then get the power usage for that partiuclar wash cycle in the kWh metric.
+
+* The loop ends here and depending on the loop condition and the value of `glass_index`, it will either jump to the first position of the loop or exits out to the next service call which is *9. Return Home*
+
+
+##### 3. Return Home
+After all the glasses ae finished washing, the loop of section *2. Glass Wash Cycle Loop* will exit and the process engine will execute the last service all *9. Return Home*
+It will then return the robot from its hovering position of *1. Home to Hover* to its home position.
+
+##### 4. Finishing of the Process
+After successfully executing all the service calls, the Process Engine will stop successfully and will show status "Finished" in the State value for the Execution tab.
+
+![Process Finsihed](img/finished.png)
+
+*Picture: Process State Change*
+
+
+***
+## iii. Video Demo
+A video demo of the whole process can be viwed here below. 
+File is also available under the directory 'video'.
+
+![Video Demo](video/demo.mp4)
+
+*Video: Demo of the Glass Washer Process*
+
+***
+
+## Acknowledgement
+**This practical project was completed by:**
+Mishkat Nur Rahman
+MS Student
+Data Engineering and Analytics
+Technical University of Munich
+
+**Supervised by:**
+Dr. Jürgen Mangler
+Chair of Business Informatics and Business Process Management
+TUM School of Computation, Information and Technology
+Technical University of Munich
+
+*Special Thanks to:*
+Lisa, Dominik & Johannes for all the technical help and feedback throughout the project :)
