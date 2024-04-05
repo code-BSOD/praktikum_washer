@@ -355,17 +355,17 @@ File is also available under the directory 'video'.
 ***
 
 ## Acknowledgement
-**This practical project was completed by:**
+* **This practical project was completed by:**
 Mishkat Nur Rahman
 MS Student
 Data Engineering and Analytics
 Technical University of Munich
 
-**Supervised by:**
+* **Supervised by:**
 Dr. Jürgen Mangler
 Chair of Business Informatics and Business Process Management
 TUM School of Computation, Information and Technology
 Technical University of Munich
 
-*Special Thanks to:*
+* *Special Thanks to:*
 Lisa, Dominik & Johannes for all the technical help and feedback throughout the project :)
