@@ -2,7 +2,7 @@
 ***
 
 ## i. Overview of Praktikum
-This repository contains the codes, architectures and detailed description for the Praktikum of Human Software Mediator Pattern.
+This repository contains the codes, architectures and detailed description for the Praktikum of Human, Software Mediator Pattern.
 
 > This repository is ONLY for the Cocktail Mixer's Glass Washing part.
 
